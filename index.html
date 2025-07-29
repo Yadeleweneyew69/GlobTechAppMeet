@@ -739,6 +739,26 @@
         font-size: 0.9rem;
       }
 
+      /* Recording indicator in participant list */
+      .recording-status {
+        color: var(--danger);
+        margin-left: 5px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+      }
+
+      .recording-status::before {
+        content: "";
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background-color: var(--danger);
+        border-radius: 50%;
+        margin-right: 4px;
+        animation: pulse 1.5s infinite;
+      }
+
       /* Map Panel */
       .map-panel {
         right: 0;
@@ -2276,6 +2296,13 @@
         let remoteStream;
         let dataChannel;
 
+        // MediaRecorder variables
+        let mediaRecorder;
+        let recordedChunks = [];
+        let recordingStartTime;
+        let recordingTimer;
+        let isRecording = false;
+
         // Initialize WebRTC with appropriate behavior for host/guest
         async function initWebRTC(isHost = true) {
           try {
@@ -2437,6 +2464,12 @@
             } else if (message.type === "location") {
               // Handle received location
               updateParticipantLocation(message.userId, message.coords);
+            } else if (message.type === "recording-status") {
+              // Update recording status for participant
+              updateParticipantRecordingStatus(
+                message.userId,
+                message.isRecording
+              );
             }
           };
         }
@@ -2688,7 +2721,6 @@
         let isCameraOn = false;
         let isMicOn = true;
         let isSharing = false;
-        let isRecording = false;
         let callActive = true;
         let participantsVisible = false;
         let chatOpen = false;
@@ -2707,6 +2739,7 @@
             isHost: true,
             isMuted: false,
             isVideoOn: true,
+            isRecording: false,
           },
           {
             id: "user2",
@@ -2716,6 +2749,7 @@
             isMuted: false,
             isVideoOn: true,
             handRaised: false,
+            isRecording: false,
           },
           {
             id: "user3",
@@ -2724,6 +2758,7 @@
             status: "Connected",
             isMuted: true,
             isVideoOn: true,
+            isRecording: false,
           },
           {
             id: "user4",
@@ -2732,6 +2767,7 @@
             status: "Muted",
             isMuted: true,
             isVideoOn: false,
+            isRecording: false,
           },
           {
             id: "user5",
@@ -2740,6 +2776,7 @@
             status: "Presenting",
             isMuted: false,
             isVideoOn: true,
+            isRecording: false,
           },
         ];
 
@@ -2805,7 +2842,11 @@
                           </div>
                           <div class="participant-status">${
                             participant.status
-                          }</div>
+                          } ${
+              participant.isRecording
+                ? '<span class="recording-status">Recording</span>'
+                : ""
+            }</div>
                       </div>
                       <div class="participant-actions">
                           ${
@@ -2852,6 +2893,33 @@
           document.querySelector(
             ".participants-count"
           ).textContent = `(${participants.length})`;
+        }
+
+        // Update participant recording status
+        function updateParticipantRecordingStatus(userId, recording) {
+          const participant = participants.find((p) => p.id === userId);
+          if (participant) {
+            participant.isRecording = recording;
+            renderParticipants();
+
+            if (recording) {
+              showNotification(`${participant.name} started recording`);
+              addMessage(
+                "system",
+                `${participant.name} started recording`,
+                "",
+                false
+              );
+            } else {
+              showNotification(`${participant.name} stopped recording`);
+              addMessage(
+                "system",
+                `${participant.name} stopped recording`,
+                "",
+                false
+              );
+            }
+          }
         }
 
         // Add a new participant
@@ -3207,22 +3275,131 @@
 
         // Recording button
         function toggleRecording() {
-          isRecording = !isRecording;
-          recordItem.innerHTML = isRecording
-            ? `<i class="fas fa-stop"></i><span>Stop Recording</span>`
-            : `<i class="fas fa-circle"></i><span>Record</span>`;
-
-          if (isRecording) {
-            showNotification("Recording started");
-            recordingIndicator.style.display = "flex";
-            addMessage("system", "Recording started", "", false);
+          if (!isRecording) {
+            startRecording();
           } else {
-            showNotification("Recording stopped");
-            recordingIndicator.style.display = "none";
-            addMessage("system", "Recording stopped", "", false);
+            stopRecording();
+          }
+        }
+
+        function startRecording() {
+          if (!localStream) {
+            showNotification("Cannot start recording - no media available");
+            return;
           }
 
-          closeBottomSheet();
+          try {
+            recordedChunks = [];
+            mediaRecorder = new MediaRecorder(localStream, {
+              mimeType: "video/webm;codecs=vp9",
+            });
+
+            mediaRecorder.ondataavailable = function (event) {
+              if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+              }
+            };
+
+            mediaRecorder.onstop = function () {
+              const blob = new Blob(recordedChunks, { type: "video/webm" });
+              const url = URL.createObjectURL(blob);
+
+              // Create download link
+              const a = document.createElement("a");
+              a.style.display = "none";
+              a.href = url;
+              a.download = `meeting-recording-${new Date()
+                .toISOString()
+                .slice(0, 10)}.webm`;
+
+              document.body.appendChild(a);
+              a.click();
+
+              // Clean up
+              setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+              }, 100);
+            };
+
+            mediaRecorder.start(1000); // Collect data every second
+            isRecording = true;
+            recordItem.innerHTML = `<i class="fas fa-stop"></i><span>Stop Recording</span>`;
+            recordingIndicator.style.display = "flex";
+            showNotification("Recording started");
+            addMessage("system", "Recording started", "", false);
+
+            // Update participant recording status
+            const currentUser = participants.find((p) => p.id === "user1");
+            if (currentUser) {
+              currentUser.isRecording = true;
+              renderParticipants();
+            }
+
+            // Notify other participants
+            if (dataChannel && dataChannel.readyState === "open") {
+              dataChannel.send(
+                JSON.stringify({
+                  type: "recording-status",
+                  userId: "user1",
+                  isRecording: true,
+                })
+              );
+            }
+
+            // Start recording timer
+            recordingStartTime = Date.now();
+            updateRecordingTimer();
+            recordingTimer = setInterval(updateRecordingTimer, 1000);
+
+            closeBottomSheet();
+          } catch (err) {
+            console.error("Error starting recording:", err);
+            showNotification("Could not start recording");
+          }
+        }
+
+        function updateRecordingTimer() {
+          const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+          const minutes = Math.floor(elapsed / 60)
+            .toString()
+            .padStart(2, "0");
+          const seconds = (elapsed % 60).toString().padStart(2, "0");
+          recordingIndicator.textContent = `Recording ${minutes}:${seconds}`;
+        }
+
+        function stopRecording() {
+          if (!mediaRecorder || mediaRecorder.state === "inactive") {
+            return;
+          }
+
+          mediaRecorder.stop();
+          isRecording = false;
+          recordItem.innerHTML = `<i class="fas fa-circle"></i><span>Record</span>`;
+          recordingIndicator.style.display = "none";
+          showNotification("Recording stopped");
+          addMessage("system", "Recording stopped", "", false);
+
+          // Update participant recording status
+          const currentUser = participants.find((p) => p.id === "user1");
+          if (currentUser) {
+            currentUser.isRecording = false;
+            renderParticipants();
+          }
+
+          // Notify other participants
+          if (dataChannel && dataChannel.readyState === "open") {
+            dataChannel.send(
+              JSON.stringify({
+                type: "recording-status",
+                userId: "user1",
+                isRecording: false,
+              })
+            );
+          }
+
+          // Stop recording timer
+          clearInterval(recordingTimer);
         }
 
         recordItem.addEventListener("click", toggleRecording);
@@ -3428,6 +3605,11 @@
 
             if (localStream) {
               localStream.getTracks().forEach((track) => track.stop());
+            }
+
+            // Stop any ongoing recording
+            if (isRecording) {
+              stopRecording();
             }
 
             // Turn off all controls
