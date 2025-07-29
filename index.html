@@ -1336,57 +1336,41 @@
         width: 100%;
       }
 
-      /* Mobile-specific styles */
+      /* Responsive adjustments */
       @media (max-width: 768px) {
         .video-container {
           grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         }
 
+        .bottom-sheet-items {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
         .sidebar-container {
-          width: 100%;
-          max-width: 320px;
+          width: 280px;
+        }
+      }
+
+      /* Mobile-specific video layout */
+      @media (max-width: 480px) {
+        .join-container {
+          padding: 1rem;
         }
 
         .controls-bar {
           padding: 8px 5px;
-          justify-content: flex-start;
-          overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: none;
-        }
-
-        .controls-bar::-webkit-scrollbar {
-          display: none;
-        }
-
-        .control-container {
-          min-width: 60px;
-          flex-shrink: 0;
         }
 
         .control-button {
-          width: 44px;
-          height: 44px;
+          width: 40px;
+          height: 40px;
         }
 
         .control-button-label {
           font-size: 0.6rem;
+          bottom: -18px;
         }
 
-        .bottom-sheet-items {
-          grid-template-columns: repeat(3, 1fr);
-          gap: 10px;
-        }
-
-        .bottom-sheet-item i {
-          font-size: 1.3rem;
-        }
-
-        .bottom-sheet-item span {
-          font-size: 0.7rem;
-        }
-
-        /* Video tiles in mobile */
         .video-container {
           display: flex;
           flex-direction: column;
@@ -1403,7 +1387,7 @@
           flex-shrink: 0;
         }
 
-        /* Fullscreen mode for mobile */
+        /* Fullscreen mode adjustments */
         .video-tile.fullscreen {
           position: fixed;
           top: 0;
@@ -1428,110 +1412,29 @@
           z-index: 1001;
         }
 
-        /* Sidebar panels in mobile */
+        .bottom-sheet-items {
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
+        }
+
+        .bottom-sheet-item i {
+          font-size: 1.3rem;
+        }
+
+        .bottom-sheet-item span {
+          font-size: 0.7rem;
+        }
+
         .sidebar-container {
           width: 100%;
           top: 60px;
           bottom: 70px;
-          max-width: none;
-        }
-
-        /* Adjust header for mobile */
-        .header {
-          padding: 10px;
-        }
-
-        .meeting-id {
-          font-size: 0.7rem;
-          padding: 4px 8px;
-        }
-
-        .join-meeting-button {
-          font-size: 0.7rem;
-          padding: 4px 8px;
-        }
-
-        /* Adjust chat input for mobile */
-        .chat-input-wrapper {
-          padding: 5px 10px;
-        }
-
-        .chat-input {
-          font-size: 0.8rem;
-        }
-
-        /* Adjust participants list for mobile */
-        .participant-item {
-          padding: 8px;
-        }
-
-        .participant-avatar {
-          width: 32px;
-          height: 32px;
-          font-size: 0.8rem;
-        }
-
-        .participant-name {
-          font-size: 0.8rem;
-        }
-
-        .participant-status {
-          font-size: 0.6rem;
-        }
-
-        .participant-action {
-          width: 24px;
-          height: 24px;
-          font-size: 0.7rem;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .join-container {
-          padding: 1rem;
-        }
-
-        .join-title {
-          font-size: 1.1rem;
-        }
-
-        .input-field {
-          padding: 0.7rem 0.9rem;
-          font-size: 0.9rem;
-        }
-
-        .button {
-          padding: 0.8rem 1.2rem;
-          font-size: 0.9rem;
-        }
-
-        .bottom-sheet-items {
-          grid-template-columns: repeat(2, 1fr);
-        }
-
-        .video-tile {
-          min-height: 150px;
-        }
-
-        .control-button {
-          width: 40px;
-          height: 40px;
-          font-size: 1rem;
         }
       }
 
       @media (max-width: 360px) {
-        .bottom-sheet-items {
-          grid-template-columns: repeat(2, 1fr);
-        }
-
-        .control-button {
-          width: 36px;
-          height: 36px;
-        }
-
         .video-tile {
-          min-height: 120px;
+          min-height: 150px;
         }
       }
 
@@ -1556,8 +1459,6 @@
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""
     />
   </head>
   <body>
@@ -1671,42 +1572,42 @@
           <div class="video-container" id="videoContainer">
             <div class="video-tile active-speaker">
               <div class="video-placeholder">
-                <div class="user-avatar">TS</div>
-                <div>Taylor Smith is presenting</div>
+                <div class="user-avatar">AK</div>
+                <div>Ababa Ketema is presenting</div>
               </div>
               <div class="video-info">
                 <i class="fas fa-desktop"></i>
-                <span>Taylor's Screen</span>
+                <span>Ababa's Screen</span>
               </div>
             </div>
             <div class="video-tile">
               <div class="video-placeholder">
-                <div class="user-avatar">AJ</div>
-                Alex Johnson
+                <div class="user-avatar">RD</div>
+                Roman Demeke
               </div>
               <div class="video-info">
                 <i class="fas fa-microphone"></i>
-                <span>Alex Johnson</span>
+                <span>Roman Demeke</span>
               </div>
             </div>
             <div class="video-tile">
               <div class="video-placeholder">
-                <div class="user-avatar">MG</div>
-                Maria Garcia
+                <div class="user-avatar">YA</div>
+                Yodit Abate
               </div>
               <div class="video-info">
                 <i class="fas fa-microphone-slash"></i>
-                <span>Maria Garcia</span>
+                <span>Yodit Abate</span>
               </div>
             </div>
             <div class="video-tile">
               <div class="video-placeholder">
-                <div class="user-avatar">SW</div>
-                Sam Wilson
+                <div class="user-avatar">MS</div>
+                Mola Sintayehu
               </div>
               <div class="video-info">
                 <i class="fas fa-microphone-slash"></i>
-                <span>Sam Wilson</span>
+                <span>Mola Sintayehu</span>
               </div>
             </div>
             <div class="video-tile">
@@ -1784,7 +1685,7 @@
             <div class="chat-messages" id="chatMessages">
               <div class="message">
                 <div class="message-info">
-                  <div class="message-sender">Alex Johnson</div>
+                  <div class="message-sender">Roman Demeke</div>
                   <div class="message-time">2:30 PM</div>
                 </div>
                 <div class="message-content">
@@ -1793,7 +1694,7 @@
               </div>
               <div class="message">
                 <div class="message-info">
-                  <div class="message-sender">Maria Garcia</div>
+                  <div class="message-sender">Yodit Abate</div>
                   <div class="message-time">2:31 PM</div>
                 </div>
                 <div class="message-content">Yes, loud and clear!</div>
@@ -1807,10 +1708,10 @@
                   Welcome everyone to our weekly meeting!
                 </div>
               </div>
-              <div class="message-system">Maria Garcia joined the meeting</div>
+              <div class="message-system">Yodit Abate joined the meeting</div>
               <div class="message">
                 <div class="message-info">
-                  <div class="message-sender">Sam Wilson</div>
+                  <div class="message-sender">Mola Sintayehu</div>
                   <div class="message-time">2:33 PM</div>
                 </div>
                 <div class="message-content">
@@ -1819,7 +1720,7 @@
               </div>
               <div class="message">
                 <div class="message-info">
-                  <div class="message-sender">Taylor Smith</div>
+                  <div class="message-sender">Ababa Ketema</div>
                   <div class="message-time">2:34 PM</div>
                 </div>
                 <div class="message-content">
@@ -1870,9 +1771,9 @@
                 </div>
               </div>
               <div class="participant-item">
-                <div class="participant-avatar">AJ</div>
+                <div class="participant-avatar">RD</div>
                 <div class="participant-info">
-                  <div class="participant-name">Alex Johnson</div>
+                  <div class="participant-name">Roman Demeke</div>
                   <div class="participant-status">Speaking</div>
                 </div>
                 <div class="participant-actions">
@@ -1886,9 +1787,9 @@
                 <i class="fas fa-hand-paper raised-hand" id="alexHand"></i>
               </div>
               <div class="participant-item">
-                <div class="participant-avatar">MG</div>
+                <div class="participant-avatar">YA</div>
                 <div class="participant-info">
-                  <div class="participant-name">Maria Garcia</div>
+                  <div class="participant-name">Yodit Abate</div>
                   <div class="participant-status">Connected</div>
                 </div>
                 <div class="participant-actions">
@@ -1898,9 +1799,9 @@
                 </div>
               </div>
               <div class="participant-item">
-                <div class="participant-avatar">SW</div>
+                <div class="participant-avatar">MS</div>
                 <div class="participant-info">
-                  <div class="participant-name">Sam Wilson</div>
+                  <div class="participant-name">Mola Sintayehu</div>
                   <div class="participant-status">Muted</div>
                 </div>
                 <div class="participant-actions">
@@ -1913,9 +1814,9 @@
                 </div>
               </div>
               <div class="participant-item">
-                <div class="participant-avatar">TS</div>
+                <div class="participant-avatar">AK</div>
                 <div class="participant-info">
-                  <div class="participant-name">Taylor Smith</div>
+                  <div class="participant-name">Ababa Ketema</div>
                   <div class="participant-status">Presenting</div>
                 </div>
                 <div class="participant-actions">
@@ -2630,10 +2531,10 @@
         function addDemoParticipants() {
           // Demo locations for participants
           const demoLocations = {
-            user2: { lat: 40.7128, lng: -74.006, name: "Alex Johnson" }, // New York
-            user3: { lat: 34.0522, lng: -118.2437, name: "Maria Garcia" }, // Los Angeles
-            user4: { lat: 41.8781, lng: -87.6298, name: "Sam Wilson" }, // Chicago
-            user5: { lat: 29.7604, lng: -95.3698, name: "Taylor Smith" }, // Houston
+            user2: { lat: 40.7128, lng: -74.006, name: "Roman Demeke" }, // New York
+            user3: { lat: 34.0522, lng: -118.2437, name: "Yodit Abate" }, // Los Angeles
+            user4: { lat: 41.8781, lng: -87.6298, name: "Mola Sintayehu" }, // Chicago
+            user5: { lat: 29.7604, lng: -95.3698, name: "Ababa Ketema" }, // Houston
           };
 
           // Create markers for each participant
@@ -2809,8 +2710,8 @@
           },
           {
             id: "user2",
-            name: "Alex Johnson",
-            initials: "AJ",
+            name: "Roman Demeke",
+            initials: "RM",
             status: "Speaking",
             isMuted: false,
             isVideoOn: true,
@@ -2818,24 +2719,24 @@
           },
           {
             id: "user3",
-            name: "Maria Garcia",
-            initials: "MG",
+            name: "Yodit Abate",
+            initials: "YA",
             status: "Connected",
             isMuted: true,
             isVideoOn: true,
           },
           {
             id: "user4",
-            name: "Sam Wilson",
-            initials: "SW",
+            name: "Mola Sinteyehu",
+            initials: "MS",
             status: "Muted",
             isMuted: true,
             isVideoOn: false,
           },
           {
             id: "user5",
-            name: "Taylor Smith",
-            initials: "TS",
+            name: "Ababa Ketema",
+            initials: "AK",
             status: "Presenting",
             isMuted: false,
             isVideoOn: true,
@@ -2845,17 +2746,17 @@
         // Initialize with some demo messages
         const demoMessages = [
           {
-            sender: "Alex Johnson",
+            sender: "Roman Demeke",
             content: "Should we go over the quarterly results first?",
             time: "2:35 PM",
           },
           {
-            sender: "Maria Garcia",
+            sender: "Yodit Abate",
             content: "Yes, I have the slides ready",
             time: "2:36 PM",
           },
           {
-            sender: "Sam Wilson",
+            sender: "Mola Sintayehu",
             content: "I need to present the marketing numbers",
             time: "2:36 PM",
           },
@@ -2891,58 +2792,58 @@
             participantItem.dataset.id = participant.id;
 
             participantItem.innerHTML = `
-                        <div class="participant-avatar">${
-                          participant.initials
-                        }</div>
-                        <div class="participant-info">
-                            <div class="participant-name">
-                                ${participant.name} ${
+                      <div class="participant-avatar">${
+                        participant.initials
+                      }</div>
+                      <div class="participant-info">
+                          <div class="participant-name">
+                              ${participant.name} ${
               participant.isHost
                 ? '<span class="participant-you">(Host)</span>'
                 : ""
             }
-                            </div>
-                            <div class="participant-status">${
-                              participant.status
-                            }</div>
-                        </div>
-                        <div class="participant-actions">
-                            ${
-                              !participant.isHost
-                                ? `
-                                <button class="participant-action mute-btn" data-id="${
-                                  participant.id
-                                }">
-                                    <i class="fas fa-${
-                                      participant.isMuted
-                                        ? "microphone"
-                                        : "microphone-slash"
-                                    }"></i>
-                                </button>
-                                <button class="participant-action video-btn" data-id="${
-                                  participant.id
-                                }">
-                                    <i class="fas fa-${
-                                      participant.isVideoOn
-                                        ? "video-slash"
-                                        : "video"
-                                    }"></i>
-                                </button>
-                            `
-                                : ""
-                            }
-                            <button class="participant-action more-btn" data-id="${
-                              participant.id
-                            }">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                        </div>
-                        ${
-                          participant.handRaised
-                            ? '<i class="fas fa-hand-paper raised-hand"></i>'
-                            : ""
-                        }
-                    `;
+                          </div>
+                          <div class="participant-status">${
+                            participant.status
+                          }</div>
+                      </div>
+                      <div class="participant-actions">
+                          ${
+                            !participant.isHost
+                              ? `
+                              <button class="participant-action mute-btn" data-id="${
+                                participant.id
+                              }">
+                                  <i class="fas fa-${
+                                    participant.isMuted
+                                      ? "microphone"
+                                      : "microphone-slash"
+                                  }"></i>
+                              </button>
+                              <button class="participant-action video-btn" data-id="${
+                                participant.id
+                              }">
+                                  <i class="fas fa-${
+                                    participant.isVideoOn
+                                      ? "video-slash"
+                                      : "video"
+                                  }"></i>
+                              </button>
+                          `
+                              : ""
+                          }
+                          <button class="participant-action more-btn" data-id="${
+                            participant.id
+                          }">
+                              <i class="fas fa-ellipsis-v"></i>
+                          </button>
+                      </div>
+                      ${
+                        participant.handRaised
+                          ? '<i class="fas fa-hand-paper raised-hand"></i>'
+                          : ""
+                      }
+                  `;
 
             participantsList.appendChild(participantItem);
           });
@@ -2963,17 +2864,17 @@
           const videoTile = document.createElement("div");
           videoTile.className = "video-tile";
           videoTile.innerHTML = `
-                    <div class="video-placeholder">
-                        <div class="user-avatar">${participant.initials}</div>
-                        ${participant.name}
-                    </div>
-                    <div class="video-info">
-                        <i class="fas fa-microphone${
-                          participant.isMuted ? "-slash" : ""
-                        }"></i>
-                        <span>${participant.name}</span>
-                    </div>
-                `;
+                  <div class="video-placeholder">
+                      <div class="user-avatar">${participant.initials}</div>
+                      ${participant.name}
+                  </div>
+                  <div class="video-info">
+                      <i class="fas fa-microphone${
+                        participant.isMuted ? "-slash" : ""
+                      }"></i>
+                      <span>${participant.name}</span>
+                  </div>
+              `;
 
           videoContainer.appendChild(videoTile);
         }
@@ -3031,12 +2932,12 @@
             messageDiv.textContent = content;
           } else {
             messageDiv.innerHTML = `
-                        <div class="message-info">
-                            <div class="message-sender">${sender}</div>
-                            <div class="message-time">${time}</div>
-                        </div>
-                        <div class="message-content">${content}</div>
-                    `;
+                      <div class="message-info">
+                          <div class="message-sender">${sender}</div>
+                          <div class="message-time">${time}</div>
+                      </div>
+                      <div class="message-content">${content}</div>
+                  `;
           }
 
           chatMessages.appendChild(messageDiv);
@@ -3638,7 +3539,7 @@
             minute: "2-digit",
           });
           addMessage(
-            "Taylor Smith",
+            "Ababa Ketema",
             "Let me share my screen to show the presentation",
             time,
             false
