@@ -362,6 +362,8 @@
         overflow: hidden;
         position: relative;
         aspect-ratio: 16/9;
+        cursor: pointer;
+        transition: var(--transition);
       }
 
       .video-tile.active-speaker {
@@ -445,6 +447,78 @@
         justify-content: center;
         cursor: pointer;
         font-size: 0.7rem;
+      }
+
+      /* Added styles for recording controls */
+      .recording-controls {
+        position: absolute;
+        bottom: 60px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 8px;
+        border-radius: 8px;
+        display: flex;
+        gap: 8px;
+        z-index: 10;
+      }
+
+      .recording-control-btn {
+        background: var(--danger);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .recording-control-btn.stop {
+        background: var(--dark);
+      }
+
+      /* Fullscreen video tile styles */
+      .video-tile.fullscreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 1000;
+        background-color: black;
+        border-radius: 0;
+      }
+
+      .video-tile.fullscreen .video-placeholder {
+        width: 100%;
+        height: 100%;
+      }
+
+      .video-tile.fullscreen .video-element {
+        object-fit: contain;
+      }
+
+      .video-tile.fullscreen .video-info {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        z-index: 1001;
+      }
+
+      .video-tile.fullscreen .video-controls {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1001;
+      }
+
+      .video-tile.fullscreen .recording-controls {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        z-index: 1001;
       }
 
       /* Controls Bar */
@@ -604,7 +678,6 @@
         border-radius: 18px;
         max-width: 80%;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        font-size: 0.9rem;
       }
 
       .message.own .message-content {
@@ -771,9 +844,48 @@
         position: relative;
       }
 
+      /* Leaflet map container */
       #map {
-        width: 100%;
         height: 100%;
+        width: 100%;
+        z-index: 1;
+      }
+
+      /* Location marker styles */
+      .location-marker {
+        width: 20px;
+        height: 20px;
+        background-color: var(--primary);
+        border-radius: 50%;
+        border: 2px solid white;
+        position: relative;
+      }
+
+      .location-marker::after {
+        content: "";
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background-color: white;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .location-marker.participant {
+        background-color: var(--danger);
+      }
+
+      /* Leaflet popup styles */
+      .leaflet-popup-content {
+        font-size: 0.9rem;
+        margin: 8px 12px;
+      }
+
+      .leaflet-popup-content-wrapper {
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
       }
 
       .map-controls {
@@ -1407,31 +1519,6 @@
           flex-shrink: 0;
         }
 
-        /* Fullscreen mode adjustments */
-        .video-tile.fullscreen {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          z-index: 1000;
-          background-color: black;
-        }
-
-        .video-tile.fullscreen .video-controls {
-          position: fixed;
-          bottom: 80px;
-          right: 15px;
-          z-index: 1001;
-        }
-
-        .video-tile.fullscreen .video-info {
-          position: fixed;
-          bottom: 20px;
-          left: 15px;
-          z-index: 1001;
-        }
-
         .bottom-sheet-items {
           grid-template-columns: repeat(3, 1fr);
           gap: 10px;
@@ -1475,11 +1562,14 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <!-- Leaflet CSS -->
+    <!-- Add EmailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3.2.0/dist/email.min.js"></script>
+    <!-- Add Leaflet for maps -->
     <link
       rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
     />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   </head>
   <body>
     <!-- Join Meeting Page -->
@@ -1590,7 +1680,7 @@
           </div>
 
           <div class="video-container" id="videoContainer">
-            <div class="video-tile active-speaker">
+            <div class="video-tile active-speaker" data-user-id="user5">
               <div class="video-placeholder">
                 <div class="user-avatar">AK</div>
                 <div>Ababa Ketema is presenting</div>
@@ -1599,8 +1689,16 @@
                 <i class="fas fa-desktop"></i>
                 <span>Ababa's Screen</span>
               </div>
+              <div class="recording-controls" style="display: none">
+                <button
+                  class="recording-control-btn start-recording"
+                  data-user-id="user5"
+                >
+                  <i class="fas fa-circle"></i> Record
+                </button>
+              </div>
             </div>
-            <div class="video-tile">
+            <div class="video-tile" data-user-id="user2">
               <div class="video-placeholder">
                 <div class="user-avatar">RD</div>
                 Roman Demeke
@@ -1609,8 +1707,16 @@
                 <i class="fas fa-microphone"></i>
                 <span>Roman Demeke</span>
               </div>
+              <div class="recording-controls" style="display: none">
+                <button
+                  class="recording-control-btn start-recording"
+                  data-user-id="user2"
+                >
+                  <i class="fas fa-circle"></i> Record
+                </button>
+              </div>
             </div>
-            <div class="video-tile">
+            <div class="video-tile" data-user-id="user3">
               <div class="video-placeholder">
                 <div class="user-avatar">YA</div>
                 Yodit Abate
@@ -1619,8 +1725,16 @@
                 <i class="fas fa-microphone-slash"></i>
                 <span>Yodit Abate</span>
               </div>
+              <div class="recording-controls" style="display: none">
+                <button
+                  class="recording-control-btn start-recording"
+                  data-user-id="user3"
+                >
+                  <i class="fas fa-circle"></i> Record
+                </button>
+              </div>
             </div>
-            <div class="video-tile">
+            <div class="video-tile" data-user-id="user4">
               <div class="video-placeholder">
                 <div class="user-avatar">MS</div>
                 Mola Sintayehu
@@ -1629,8 +1743,16 @@
                 <i class="fas fa-microphone-slash"></i>
                 <span>Mola Sintayehu</span>
               </div>
+              <div class="recording-controls" style="display: none">
+                <button
+                  class="recording-control-btn start-recording"
+                  data-user-id="user4"
+                >
+                  <i class="fas fa-circle"></i> Record
+                </button>
+              </div>
             </div>
-            <div class="video-tile">
+            <div class="video-tile" data-user-id="user1">
               <div class="video-placeholder">
                 <div class="user-avatar">YG</div>
                 You
@@ -1859,6 +1981,7 @@
           </div>
           <div class="sidebar-content">
             <div class="map-container">
+              <!-- Leaflet Map will be loaded here -->
               <div id="map"></div>
               <div class="map-controls">
                 <button class="map-control-button" id="locateMeButton">
@@ -1934,6 +2057,7 @@
                     class="invite-input"
                     id="emailInput"
                     placeholder="Enter email addresses"
+                    value="yadeleweneyew12@gmail.com, yadeleweneyew1919@gmail.com, yadeleweneyew69@gmail.com"
                   />
                 </div>
                 <div class="invite-input-group">
@@ -1943,7 +2067,9 @@
                     id="messageInput"
                     rows="3"
                     placeholder="Add a personal message"
-                  ></textarea>
+                  >
+You've been invited to join a ConnectHub meeting. Please click the link below to join.</textarea
+                  >
                 </div>
               </div>
 
@@ -2090,14 +2216,21 @@
       </div>
     </div>
 
-    <!-- Leaflet JS -->
-    <script
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-      crossorigin=""
-    ></script>
-
     <script>
+      // Initialize EmailJS with your user ID
+      (function () {
+        emailjs.init("kb5G3pleQGlYwsog7"); // Replace with your actual EmailJS user ID
+      })();
+
+      // Global variables
+      let screenShareStream = null; // Track screen sharing stream
+      let mediaRecorder = null; // For recording functionality
+      let recordedChunks = []; // Store recorded data
+      let isRecording = false; // Track recording state
+      let recordingStartTime = null; // Track when recording started
+      let recordingTimer = null; // For updating recording timer
+      let isSharing = false; // Track screen sharing state
+
       // Function to generate a random meeting ID
       function generateMeetingId() {
         const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Excluding easily confused characters
@@ -2296,12 +2429,487 @@
         let remoteStream;
         let dataChannel;
 
-        // MediaRecorder variables
-        let mediaRecorder;
-        let recordedChunks = [];
-        let recordingStartTime;
-        let recordingTimer;
-        let isRecording = false;
+        // Location variables
+        let map;
+        let userMarker;
+        let participantMarkers = {};
+        let userLocation = null;
+        let watchId = null;
+        let isSharingLocation = false;
+
+        // Initialize the map
+        function initMap() {
+          // Default to Addis Ababa coordinates
+          const defaultLocation = [9.0054, 38.7636];
+
+          // Create the map
+          map = L.map("map").setView(defaultLocation, 12);
+
+          // Add OpenStreetMap tiles
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          }).addTo(map);
+
+          // Create the user marker (initially hidden)
+          userMarker = L.marker(defaultLocation, {
+            icon: L.divIcon({
+              html: '<div class="location-marker"></div>',
+              iconSize: [20, 20],
+              className: "user-marker",
+            }),
+          }).addTo(map);
+          userMarker.setOpacity(0); // Start hidden
+
+          // Add participant markers (demo data)
+          addParticipantMarker("user2", [9.0154, 38.7736], "Roman Demeke");
+          addParticipantMarker("user3", [8.9954, 38.7536], "Yodit Abate");
+          addParticipantMarker("user4", [9.0254, 38.7436], "Mola Sintayehu");
+          addParticipantMarker("user5", [8.9854, 38.7836], "Ababa Ketema");
+        }
+
+        // Add a participant marker to the map
+        function addParticipantMarker(userId, position, name) {
+          participantMarkers[userId] = L.marker(position, {
+            icon: L.divIcon({
+              html: '<div class="location-marker participant"></div>',
+              iconSize: [20, 20],
+              className: "participant-marker",
+            }),
+          }).addTo(map);
+
+          // Add popup
+          participantMarkers[userId].bindPopup(
+            `<b>${name}</b><br>Meeting Participant`
+          );
+        }
+
+        // Get user's current location
+        function locateUser() {
+          if (navigator.geolocation) {
+            showNotification("Getting your location...");
+
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                const pos = [
+                  position.coords.latitude,
+                  position.coords.longitude,
+                ];
+                userLocation = pos;
+                updateUserMarker(pos);
+                showNotification("Location found");
+
+                if (isSharingLocation) {
+                  startWatchingPosition();
+                }
+              },
+              (error) => {
+                console.error("Error getting location:", error);
+                showNotification("Could not get your location");
+              },
+              {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0,
+              }
+            );
+          } else {
+            showNotification("Geolocation is not supported by this browser");
+          }
+        }
+
+        // Start watching user's position
+        function startWatchingPosition() {
+          if (watchId) {
+            navigator.geolocation.clearWatch(watchId);
+          }
+
+          watchId = navigator.geolocation.watchPosition(
+            (position) => {
+              const newPos = [
+                position.coords.latitude,
+                position.coords.longitude,
+              ];
+              userLocation = newPos;
+              updateUserMarker(newPos);
+
+              // In a real app, you would send this update to other participants
+              if (dataChannel && dataChannel.readyState === "open") {
+                dataChannel.send(
+                  JSON.stringify({
+                    type: "location-update",
+                    userId: "user1",
+                    position: newPos,
+                  })
+                );
+              }
+            },
+            (error) => {
+              console.error("Error watching position:", error);
+              showNotification("Error updating location");
+            },
+            {
+              enableHighAccuracy: true,
+              maximumAge: 30000,
+              timeout: 10000,
+            }
+          );
+        }
+
+        // Update user's marker on the map
+        function updateUserMarker(position) {
+          userMarker.setLatLng(position);
+          userMarker.setOpacity(1);
+          map.setView(position);
+
+          // Reverse geocode to get address (using Nominatim API)
+          fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position[0]}&lon=${position[1]}`
+          )
+            .then((response) => response.json())
+            .then((data) => {
+              const address = data.display_name || "Your Location";
+              userMarker
+                .bindPopup(`<b>Your Location</b><br>${address}`)
+                .openPopup();
+            })
+            .catch((error) => {
+              console.error("Error reverse geocoding:", error);
+              userMarker.bindPopup("<b>Your Location</b>").openPopup();
+            });
+        }
+
+        // Share location with participants
+        function shareLocation() {
+          if (!userLocation) {
+            showNotification("Please locate yourself first");
+            return;
+          }
+
+          isSharingLocation = true;
+          startWatchingPosition();
+          showNotification("Location shared with participants");
+
+          // In a real app, this would share via WebRTC data channel
+          if (dataChannel && dataChannel.readyState === "open") {
+            dataChannel.send(
+              JSON.stringify({
+                type: "location-share",
+                userId: "user1",
+                position: userLocation,
+              })
+            );
+          }
+        }
+
+        // Stop sharing location
+        function stopSharingLocation() {
+          isSharingLocation = false;
+          if (watchId) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+          }
+          userMarker.setOpacity(0);
+          showNotification("Stopped sharing location");
+
+          // In a real app, notify participants
+          if (dataChannel && dataChannel.readyState === "open") {
+            dataChannel.send(
+              JSON.stringify({
+                type: "location-stop",
+                userId: "user1",
+              })
+            );
+          }
+        }
+
+        // Show recording controls on video tile hover
+        document.querySelectorAll(".video-tile").forEach((tile) => {
+          tile.addEventListener("mouseenter", () => {
+            const controls = tile.querySelector(".recording-controls");
+            if (controls) controls.style.display = "flex";
+          });
+
+          tile.addEventListener("mouseleave", () => {
+            const controls = tile.querySelector(".recording-controls");
+            if (controls && !controls.querySelector(".stop-recording")) {
+              controls.style.display = "none";
+            }
+          });
+        });
+
+        // Start recording a participant
+        document.addEventListener("click", async (e) => {
+          if (e.target.closest(".start-recording")) {
+            const userId = e.target.closest(".start-recording").dataset.userId;
+            const participant = participants.find((p) => p.id === userId);
+
+            if (participant) {
+              try {
+                // In a real app, you would request the participant's stream
+                // For demo, we'll simulate getting their stream
+                const stream = await getParticipantStream(userId);
+
+                // Create media recorder
+                const mediaRecorder = new MediaRecorder(stream, {
+                  mimeType: "video/webm;codecs=vp9",
+                });
+
+                const recordedChunks = [];
+                mediaRecorder.ondataavailable = (event) => {
+                  if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                  }
+                };
+
+                mediaRecorder.onstop = () => {
+                  const blob = new Blob(recordedChunks, { type: "video/webm" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.style.display = "none";
+                  a.href = url;
+                  a.download = `recording-${participant.name}-${new Date()
+                    .toISOString()
+                    .slice(0, 10)}.webm`;
+                  document.body.appendChild(a);
+                  a.click();
+                  setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                  }, 100);
+                };
+
+                // Store recording info
+                recordings[userId] = {
+                  mediaRecorder,
+                  startTime: Date.now(),
+                  timer: null,
+                };
+
+                // Update UI
+                const controls = e.target.closest(".recording-controls");
+                controls.innerHTML = `
+                  <button class="recording-control-btn stop stop-recording" data-user-id="${userId}">
+                    <i class="fas fa-stop"></i> Stop (00:00)
+                  </button>
+                `;
+
+                // Start timer
+                recordings[userId].timer = setInterval(() => {
+                  const elapsed = Math.floor(
+                    (Date.now() - recordings[userId].startTime) / 1000
+                  );
+                  const minutes = Math.floor(elapsed / 60)
+                    .toString()
+                    .padStart(2, "0");
+                  const seconds = (elapsed % 60).toString().padStart(2, "0");
+                  controls.querySelector(".stop-recording").innerHTML = `
+                    <i class="fas fa-stop"></i> Stop (${minutes}:${seconds})
+                  `;
+                }, 1000);
+
+                // Start recording
+                mediaRecorder.start(1000); // Collect data every second
+
+                // Notify participant (in real app via data channel)
+                if (dataChannel && dataChannel.readyState === "open") {
+                  dataChannel.send(
+                    JSON.stringify({
+                      type: "recording-started",
+                      targetUserId: userId,
+                      recordingUserId: "user1", // Current user
+                    })
+                  );
+                }
+
+                showNotification(`Started recording ${participant.name}`);
+                addMessage(
+                  "system",
+                  `Started recording ${participant.name}`,
+                  "",
+                  false
+                );
+              } catch (err) {
+                console.error("Error starting recording:", err);
+                showNotification("Could not start recording");
+              }
+            }
+          }
+
+          // Stop recording
+          if (e.target.closest(".stop-recording")) {
+            const userId = e.target.closest(".stop-recording").dataset.userId;
+            const participant = participants.find((p) => p.id === userId);
+
+            if (participant && recordings[userId]) {
+              // Stop recording
+              recordings[userId].mediaRecorder.stop();
+              clearInterval(recordings[userId].timer);
+
+              // Update UI
+              const controls = e.target.closest(".recording-controls");
+              controls.innerHTML = `
+                <button class="recording-control-btn start-recording" data-user-id="${userId}">
+                  <i class="fas fa-circle"></i> Record
+                </button>
+              `;
+
+              // Remove from recordings
+              delete recordings[userId];
+
+              // Notify participant (in real app via data channel)
+              if (dataChannel && dataChannel.readyState === "open") {
+                dataChannel.send(
+                  JSON.stringify({
+                    type: "recording-stopped",
+                    targetUserId: userId,
+                    recordingUserId: "user1", // Current user
+                  })
+                );
+              }
+
+              showNotification(`Stopped recording ${participant.name}`);
+              addMessage(
+                "system",
+                `Stopped recording ${participant.name}`,
+                "",
+                false
+              );
+            }
+          }
+        });
+
+        // Simulate getting participant stream (in real app, this would be the actual stream)
+        function getParticipantStream(userId) {
+          return new Promise((resolve) => {
+            // In a real app, you would get the actual MediaStream for the participant
+            // For demo, we'll create a dummy stream
+            if (userId === "user1") {
+              // For local user, use their camera
+              navigator.mediaDevices
+                .getUserMedia({ video: true, audio: true })
+                .then((stream) => resolve(stream))
+                .catch(() => {
+                  // Fallback if no media access
+                  const canvas = document.createElement("canvas");
+                  canvas.width = 640;
+                  canvas.height = 480;
+                  const ctx = canvas.getContext("2d");
+                  ctx.fillStyle = "#333";
+                  ctx.fillRect(0, 0, canvas.width, canvas.height);
+                  ctx.fillStyle = "#fff";
+                  ctx.font = "30px Arial";
+                  ctx.fillText("Demo Stream", 50, 50);
+
+                  const stream = canvas.captureStream(15);
+                  resolve(stream);
+                });
+            } else {
+              // For remote participants, simulate a stream
+              const canvas = document.createElement("canvas");
+              canvas.width = 640;
+              canvas.height = 480;
+              const ctx = canvas.getContext("2d");
+              ctx.fillStyle = "#333";
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              ctx.fillStyle = "#fff";
+              ctx.font = "30px Arial";
+              ctx.fillText(
+                participants.find((p) => p.id === userId).name,
+                50,
+                50
+              );
+
+              const stream = canvas.captureStream(15);
+              resolve(stream);
+            }
+          });
+        }
+
+        // Handle recording notifications from other participants
+        function setupDataChannel() {
+          dataChannel.onopen = () => {
+            console.log("Data channel opened");
+          };
+
+          dataChannel.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+
+            if (message.type === "recording-started") {
+              if (message.targetUserId === "user1") {
+                // Current user
+                showNotification(
+                  `${getParticipantName(
+                    message.recordingUserId
+                  )} is recording you`
+                );
+                addMessage(
+                  "system",
+                  `${getParticipantName(
+                    message.recordingUserId
+                  )} started recording you`,
+                  "",
+                  false
+                );
+              }
+            } else if (message.type === "recording-stopped") {
+              if (message.targetUserId === "user1") {
+                // Current user
+                showNotification(
+                  `${getParticipantName(
+                    message.recordingUserId
+                  )} stopped recording you`
+                );
+                addMessage(
+                  "system",
+                  `${getParticipantName(
+                    message.recordingUserId
+                  )} stopped recording you`,
+                  "",
+                  false
+                );
+              }
+            } else if (message.type === "location-update") {
+              // Update participant marker position
+              if (participantMarkers[message.userId]) {
+                participantMarkers[message.userId].setLatLng(message.position);
+              }
+            } else if (message.type === "location-share") {
+              // Show participant is sharing location
+              showNotification(
+                `${getParticipantName(
+                  message.userId
+                )} is sharing their location`
+              );
+              addMessage(
+                "system",
+                `${getParticipantName(
+                  message.userId
+                )} is sharing their location`,
+                "",
+                false
+              );
+            } else if (message.type === "location-stop") {
+              // Show participant stopped sharing location
+              showNotification(
+                `${getParticipantName(message.userId)} stopped sharing location`
+              );
+              addMessage(
+                "system",
+                `${getParticipantName(
+                  message.userId
+                )} stopped sharing location`,
+                "",
+                false
+              );
+            }
+          };
+        }
+
+        function getParticipantName(userId) {
+          const participant = participants.find((p) => p.id === userId);
+          return participant ? participant.name : "Unknown";
+        }
 
         // Initialize WebRTC with appropriate behavior for host/guest
         async function initWebRTC(isHost = true) {
@@ -2315,7 +2923,7 @@
 
               // Display local video
               const localVideoTile = document.querySelector(
-                ".video-tile:last-child .video-placeholder"
+                ".video-tile[data-user-id='user1'] .video-placeholder"
               );
               localVideoTile.innerHTML =
                 "<video autoplay playsinline muted></video>";
@@ -2352,7 +2960,7 @@
 
               // Display local video
               const localVideoTile = document.querySelector(
-                ".video-tile:last-child .video-placeholder"
+                ".video-tile[data-user-id='user1'] .video-placeholder"
               );
               localVideoTile.innerHTML =
                 "<video autoplay playsinline muted></video>";
@@ -2423,57 +3031,6 @@
           }
         }
 
-        function setupDataChannel() {
-          dataChannel.onopen = () => {
-            console.log("Data channel opened");
-          };
-
-          dataChannel.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            if (message.type === "chat") {
-              addMessage(message.sender, message.content, message.time, false);
-            } else if (message.type === "reaction") {
-              createReaction(message.reaction);
-            } else if (message.type === "hand") {
-              if (message.raised) {
-                alexHand.style.display = "block";
-                showNotification("Alex raised their hand");
-              } else {
-                alexHand.style.display = "none";
-              }
-            } else if (message.type === "participant-joined") {
-              addParticipant(message.participant);
-              showNotification(
-                `${message.participant.name} joined the meeting`
-              );
-              addMessage(
-                "system",
-                `${message.participant.name} joined the meeting`,
-                "",
-                false
-              );
-            } else if (message.type === "participant-left") {
-              removeParticipant(message.participantId);
-              showNotification(`${message.participantName} left the meeting`);
-              addMessage(
-                "system",
-                `${message.participantName} left the meeting`,
-                "",
-                false
-              );
-            } else if (message.type === "location") {
-              // Handle received location
-              updateParticipantLocation(message.userId, message.coords);
-            } else if (message.type === "recording-status") {
-              // Update recording status for participant
-              updateParticipantRecordingStatus(
-                message.userId,
-                message.isRecording
-              );
-            }
-          };
-        }
-
         // DOM Elements
         const chatPanel = document.getElementById("chatPanel");
         const chatClose = document.getElementById("chatClose");
@@ -2505,7 +3062,6 @@
         const reactionsPanel = document.getElementById("reactionsPanel");
         const shareItem = document.getElementById("shareItem");
         const recordItem = document.getElementById("recordItem");
-        const settingsItem = document.getElementById("settingsItem");
         const recordingIndicator =
           document.getElementById("recordingIndicator");
         const inviteModal = document.getElementById("inviteModal");
@@ -2536,191 +3092,9 @@
         );
         const conferenceArea = document.getElementById("conferenceArea");
 
-        // Map variables
-        let map;
-        let userMarker;
-        let participantMarkers = {};
-        let userLocation = null;
-
-        // Initialize the map
-        function initMap() {
-          // Default to a world view
-          map = L.map("map").setView([0, 0], 2);
-
-          // Add OpenStreetMap tiles
-          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution:
-              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-          }).addTo(map);
-
-          // Add a scale control
-          L.control.scale().addTo(map);
-
-          // Add demo participant markers
-          addDemoParticipants();
-        }
-
-        // Add demo participants to the map
-        function addDemoParticipants() {
-          // Demo locations for participants
-          const demoLocations = {
-            user2: { lat: 40.7128, lng: -74.006, name: "Roman Demeke" }, // New York
-            user3: { lat: 34.0522, lng: -118.2437, name: "Yodit Abate" }, // Los Angeles
-            user4: { lat: 41.8781, lng: -87.6298, name: "Mola Sintayehu" }, // Chicago
-            user5: { lat: 29.7604, lng: -95.3698, name: "Ababa Ketema" }, // Houston
-          };
-
-          // Create markers for each participant
-          Object.keys(demoLocations).forEach((userId) => {
-            const loc = demoLocations[userId];
-            const marker = L.marker([loc.lat, loc.lng]).addTo(map);
-            marker.bindPopup(`<b>${loc.name}</b><br>Joined from ${loc.name}`);
-            participantMarkers[userId] = marker;
-          });
-        }
-
-        // Update participant location on the map
-        function updateParticipantLocation(userId, coords) {
-          if (participantMarkers[userId]) {
-            // Move existing marker
-            participantMarkers[userId].setLatLng([
-              coords.latitude,
-              coords.longitude,
-            ]);
-          } else {
-            // Create new marker
-            const participant = participants.find((p) => p.id === userId);
-            if (participant) {
-              const marker = L.marker([
-                coords.latitude,
-                coords.longitude,
-              ]).addTo(map);
-              marker.bindPopup(`<b>${participant.name}</b>`);
-              participantMarkers[userId] = marker;
-            }
-          }
-
-          // If we have user location, fit bounds to show all markers
-          if (userLocation) {
-            const bounds = L.latLngBounds(
-              Object.values(participantMarkers).map((m) => m.getLatLng())
-            );
-            bounds.extend([userLocation.latitude, userLocation.longitude]);
-            map.fitBounds(bounds);
-          }
-        }
-
-        // Locate the current user
-        function locateUser() {
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                userLocation = position.coords;
-
-                // Remove existing user marker if it exists
-                if (userMarker) {
-                  map.removeLayer(userMarker);
-                }
-
-                // Add new marker for user
-                userMarker = L.marker(
-                  [userLocation.latitude, userLocation.longitude],
-                  {
-                    icon: L.divIcon({
-                      className: "user-location-marker",
-                      html: '<i class="fas fa-user" style="color: #4361ee; font-size: 24px;"></i>',
-                      iconSize: [24, 24],
-                    }),
-                  }
-                ).addTo(map);
-
-                userMarker.bindPopup("<b>Your Location</b>").openPopup();
-
-                // Center map on user location
-                map.setView(
-                  [userLocation.latitude, userLocation.longitude],
-                  12
-                );
-
-                showNotification("Your location has been added to the map");
-              },
-              (error) => {
-                console.error("Error getting location:", error);
-                showNotification("Could not get your location");
-              },
-              { enableHighAccuracy: true }
-            );
-          } else {
-            showNotification("Geolocation is not supported by your browser");
-          }
-        }
-
-        // Share the user's location with other participants
-        function shareLocation() {
-          if (!userLocation) {
-            showNotification("Please locate yourself first");
-            return;
-          }
-
-          if (dataChannel && dataChannel.readyState === "open") {
-            dataChannel.send(
-              JSON.stringify({
-                type: "location",
-                userId: "user1", // Current user ID
-                coords: userLocation,
-              })
-            );
-
-            showNotification("Your location has been shared with participants");
-          } else {
-            showNotification("Could not share location - connection issue");
-          }
-        }
-
-        // Open map panel
-        function openMap() {
-          mapPanel.classList.add("open");
-          conferenceArea.style.marginRight = "320px";
-          overlay.classList.add("show");
-
-          // Initialize map if not already done
-          if (!map) {
-            initMap();
-          }
-        }
-
-        // Close map panel
-        function closeMap() {
-          mapPanel.classList.remove("open");
-          conferenceArea.style.marginRight = "0";
-          overlay.classList.remove("show");
-        }
-
-        // Map button click handler
-        mapButton.addEventListener("click", function () {
-          if (mapPanel.classList.contains("open")) {
-            closeMap();
-          } else {
-            // Close other panels first
-            closeChat();
-            closeParticipants();
-            openMap();
-          }
-        });
-
-        // Map close button
-        mapClose.addEventListener("click", closeMap);
-
-        // Locate me button
-        locateMeButton.addEventListener("click", locateUser);
-
-        // Share location button
-        shareLocationButton.addEventListener("click", shareLocation);
-
         // State variables
         let isCameraOn = false;
         let isMicOn = true;
-        let isSharing = false;
         let callActive = true;
         let participantsVisible = false;
         let chatOpen = false;
@@ -2931,6 +3305,7 @@
           const videoContainer = document.getElementById("videoContainer");
           const videoTile = document.createElement("div");
           videoTile.className = "video-tile";
+          videoTile.dataset.userId = participant.id;
           videoTile.innerHTML = `
                   <div class="video-placeholder">
                       <div class="user-avatar">${participant.initials}</div>
@@ -2941,6 +3316,13 @@
                         participant.isMuted ? "-slash" : ""
                       }"></i>
                       <span>${participant.name}</span>
+                  </div>
+                  <div class="recording-controls" style="display: none;">
+                    <button class="recording-control-btn start-recording" data-user-id="${
+                      participant.id
+                    }">
+                      <i class="fas fa-circle"></i> Record
+                    </button>
                   </div>
               `;
 
@@ -2954,7 +3336,7 @@
 
           // Remove the participant's video tile
           const videoTile = document.querySelector(
-            `.video-tile[data-id="${participantId}"]`
+            `.video-tile[data-user-id="${participantId}"]`
           );
           if (videoTile) {
             videoTile.remove();
@@ -3216,52 +3598,73 @@
         async function toggleScreenShare() {
           try {
             if (!isSharing) {
+              // Get screen sharing stream
               const stream = await navigator.mediaDevices.getDisplayMedia({
-                video: true,
+                video: {
+                  displaySurface: "browser", // Can be 'browser', 'window', or 'monitor'
+                  cursor: "always", // Show cursor in recording
+                },
                 audio: true,
               });
+
+              // Store the screen sharing stream for recording
+              screenShareStream = stream;
 
               // Replace the video track in our peer connection
               const videoTrack = stream.getVideoTracks()[0];
               const sender = peerConnection
                 .getSenders()
                 .find((s) => s.track.kind === "video");
-              sender.replaceTrack(videoTrack);
+              if (sender) {
+                sender.replaceTrack(videoTrack);
+              }
 
               isSharing = true;
               shareItem.innerHTML = `<i class="fas fa-stop"></i><span>Stop Sharing</span>`;
               showNotification("Started screen sharing");
 
+              // Handle when user stops sharing via browser controls
+              stream.getVideoTracks()[0].onended = () => {
+                if (isSharing) {
+                  toggleScreenShare();
+                }
+              };
+
               // Change the main video tile to show shared screen
               const mainTile = document.querySelector(
-                ".video-tile:first-child .video-placeholder"
+                ".video-tile[data-user-id='user1'] .video-placeholder"
               );
               mainTile.innerHTML = "<video autoplay playsinline></video>";
               const videoElement = mainTile.querySelector("video");
               videoElement.srcObject = stream;
-
-              // Handle when user stops sharing
-              videoTrack.onended = () => {
-                toggleScreenShare();
-              };
             } else {
               // Revert to camera
-              const videoTrack = localStream.getVideoTracks()[0];
-              const sender = peerConnection
-                .getSenders()
-                .find((s) => s.track.kind === "video");
-              sender.replaceTrack(videoTrack);
+              if (localStream) {
+                const videoTrack = localStream.getVideoTracks()[0];
+                const sender = peerConnection
+                  .getSenders()
+                  .find((s) => s.track.kind === "video");
+                if (sender && videoTrack) {
+                  sender.replaceTrack(videoTrack);
+                }
+              }
+
+              // Stop the screen share stream
+              if (screenShareStream) {
+                screenShareStream.getTracks().forEach((track) => track.stop());
+                screenShareStream = null;
+              }
 
               isSharing = false;
               shareItem.innerHTML = `<i class="fas fa-desktop"></i><span>Share Screen</span>`;
               showNotification("Stopped screen sharing");
 
-              // Revert the main video tile
+              // Revert the video tile
               const mainTile = document.querySelector(
-                ".video-tile:first-child .video-placeholder"
+                ".video-tile[data-user-id='user1'] .video-placeholder"
               );
               mainTile.innerHTML =
-                '<div class="user-avatar">TS</div><div>Taylor Smith is presenting</div>';
+                '<div class="user-avatar">YG</div><div>You</div>';
             }
 
             closeBottomSheet();
@@ -3283,16 +3686,25 @@
         }
 
         function startRecording() {
-          if (!localStream) {
+          // Determine which stream to record (screen share or local stream)
+          const streamToRecord =
+            isSharing && screenShareStream ? screenShareStream : localStream;
+
+          if (!streamToRecord) {
             showNotification("Cannot start recording - no media available");
             return;
           }
 
           try {
             recordedChunks = [];
-            mediaRecorder = new MediaRecorder(localStream, {
+
+            // Configure MediaRecorder options based on stream type
+            const options = {
               mimeType: "video/webm;codecs=vp9",
-            });
+              videoBitsPerSecond: 2500000, // Higher bitrate for screen sharing
+            };
+
+            mediaRecorder = new MediaRecorder(streamToRecord, options);
 
             mediaRecorder.ondataavailable = function (event) {
               if (event.data.size > 0) {
@@ -3308,9 +3720,9 @@
               const a = document.createElement("a");
               a.style.display = "none";
               a.href = url;
-              a.download = `meeting-recording-${new Date()
-                .toISOString()
-                .slice(0, 10)}.webm`;
+              a.download = `meeting-recording-${
+                isSharing ? "screen-" : ""
+              }${new Date().toISOString().slice(0, 10)}.webm`;
 
               document.body.appendChild(a);
               a.click();
@@ -3334,17 +3746,6 @@
             if (currentUser) {
               currentUser.isRecording = true;
               renderParticipants();
-            }
-
-            // Notify other participants
-            if (dataChannel && dataChannel.readyState === "open") {
-              dataChannel.send(
-                JSON.stringify({
-                  type: "recording-status",
-                  userId: "user1",
-                  isRecording: true,
-                })
-              );
             }
 
             // Start recording timer
@@ -3385,17 +3786,6 @@
           if (currentUser) {
             currentUser.isRecording = false;
             renderParticipants();
-          }
-
-          // Notify other participants
-          if (dataChannel && dataChannel.readyState === "open") {
-            dataChannel.send(
-              JSON.stringify({
-                type: "recording-status",
-                userId: "user1",
-                isRecording: false,
-              })
-            );
           }
 
           // Stop recording timer
@@ -3493,30 +3883,48 @@
           window.location.href = url;
         });
 
-        // Function to send email invitation
-        async function sendEmailInvitation(email, subject, message) {
+        // Function to send email invitation using EmailJS
+        async function sendEmailInvitation(
+          email,
+          subject,
+          message,
+          meetingLink
+        ) {
           try {
-            // In a real application, you would call your backend API here
-            // For demo purposes, we'll simulate the API call
-            console.log(`Sending email to: ${email}`);
-            console.log(`Subject: ${subject}`);
-            console.log(`Message: ${message}`);
+            // Prepare the email parameters with proper HTML formatting
+            const templateParams = {
+              to_email: email,
+              subject: subject,
+              message_html:
+                message ||
+                `<p>You've been invited to join a ConnectHub meeting.</p>
+                 <p><strong>Meeting Details:</strong></p>
+                 <p>Meeting ID: ${meetingId}</p>
+                 <p>Meeting Link: <a href="${meetingLink}">${meetingLink}</a></p>
+                 <p>Best regards,<br>ConnectHub Team</p>`,
+              meeting_link: meetingLink,
+              meeting_id: meetingId,
+            };
 
-            // Simulate API call delay
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            // Send the email using EmailJS
+            const response = await emailjs.send(
+              "service_ixi4048", // Your EmailJS service ID
+              "template_6zdpb9p", // Your EmailJS template ID
+              templateParams
+            );
 
-            // For testing with yadeleweneyew12@gmail.com, we'll show a success message
-            if (email.includes("yadeleweneyew12@gmail.com")) {
-              return {
-                success: true,
-                message: "Email sent successfully to yadeleweneyew12@gmail.com",
-              };
-            }
-
-            return { success: true, message: "Invitations sent successfully" };
+            return {
+              success: true,
+              message: "Email sent successfully to " + email,
+              response: response,
+            };
           } catch (error) {
             console.error("Error sending email:", error);
-            return { success: false, message: "Failed to send invitations" };
+            return {
+              success: false,
+              message:
+                "Failed to send invitation to " + email + ": " + error.message,
+            };
           }
         }
 
@@ -3524,6 +3932,8 @@
         sendInvite.addEventListener("click", async function () {
           const emailText = document.getElementById("emailInput").value.trim();
           const message = document.getElementById("messageInput").value.trim();
+          const meetingLink =
+            document.getElementById("meetingLink").textContent;
 
           // Validate at least one email is entered
           if (!emailText) {
@@ -3553,12 +3963,18 @@
           showNotification("Sending invites...");
 
           // Get meeting details
-          const meetingLink =
-            document.getElementById("meetingLink").textContent;
           const subject = "Invitation to ConnectHub Meeting";
           const emailMessage =
             message ||
-            `You've been invited to join a ConnectHub meeting. Click the link to join: ${meetingLink}`;
+            `<p>You've been invited to join a ConnectHub meeting.</p>
+             <p><strong>Meeting Details:</strong></p>
+             <p>Meeting ID: ${meetingId}</p>
+             <p>Meeting Link: <a href="${meetingLink}">${meetingLink}</a></p>
+             <p>Best regards,<br>ConnectHub Team</p>`;
+
+          // Track successful sends
+          let successfulSends = 0;
+          let errorMessages = [];
 
           // Send emails
           try {
@@ -3566,19 +3982,38 @@
               const result = await sendEmailInvitation(
                 email,
                 subject,
-                emailMessage
+                emailMessage,
+                meetingLink
               );
-              if (!result.success) {
-                throw new Error(result.message);
+              if (result.success) {
+                successfulSends++;
+              } else {
+                errorMessages.push(result.message);
               }
             }
 
-            // Show success modal
-            closeInviteModal();
-            showInviteSuccess();
+            // Show appropriate message based on results
+            if (successfulSends === emails.length) {
+              // All emails sent successfully
+              showNotification("All invitations sent successfully");
+              closeInviteModal();
+              showInviteSuccess();
+            } else if (successfulSends > 0) {
+              // Some succeeded, some failed
+              showNotification(
+                `Sent ${successfulSends} invitation(s), but failed to send ${
+                  emails.length - successfulSends
+                }. ${errorMessages.join(" ")}`
+              );
+              closeInviteModal();
+              showInviteSuccess();
+            } else {
+              // All failed
+              throw new Error(errorMessages.join(" "));
+            }
           } catch (error) {
             console.error("Error sending invites:", error);
-            showNotification("Failed to send some invites. Please try again.");
+            showNotification("Failed to send invites: " + error.message);
           }
         });
 
@@ -3591,6 +4026,53 @@
         // Close invite modal
         inviteClose.addEventListener("click", closeInviteModal);
         inviteButton.addEventListener("click", openInviteModal);
+
+        // Map functionality
+        function openMap() {
+          mapOpen = true;
+          mapPanel.classList.add("open");
+          conferenceArea.style.marginRight = "320px";
+          overlay.classList.add("show");
+        }
+
+        function closeMap() {
+          mapOpen = false;
+          mapPanel.classList.remove("open");
+          conferenceArea.style.marginRight = "0";
+          overlay.classList.remove("show");
+        }
+
+        mapButton.addEventListener("click", function () {
+          if (mapPanel.classList.contains("open")) {
+            closeMap();
+          } else {
+            // Close other panels first
+            closeChat();
+            closeParticipants();
+            openMap();
+          }
+        });
+
+        mapClose.addEventListener("click", closeMap);
+
+        // Locate me button
+        locateMeButton.addEventListener("click", function () {
+          locateUser();
+        });
+
+        // Share location button
+        shareLocationButton.addEventListener("click", function () {
+          if (userMarker.getOpacity() > 0) {
+            stopSharingLocation();
+            shareLocationButton.innerHTML = '<i class="fas fa-share"></i>';
+          } else {
+            if (!userLocation) {
+              locateUser();
+            }
+            shareLocation();
+            shareLocationButton.innerHTML = '<i class="fas fa-stop"></i>';
+          }
+        });
 
         // End call button
         endCallButton.addEventListener("click", function () {
@@ -3678,33 +4160,54 @@
             .padStart(2, "0")}`;
         }
 
-        // Fullscreen functionality for video tiles
-        document.querySelectorAll(".video-control").forEach((control) => {
-          control.addEventListener("click", function (e) {
-            e.stopPropagation();
-            const tile = this.closest(".video-tile");
+        // Video tile fullscreen functionality
+        function setupVideoTileClickHandlers() {
+          document.querySelectorAll(".video-tile").forEach((tile) => {
+            tile.addEventListener("click", function (e) {
+              // Don't toggle fullscreen if clicking on controls
+              if (
+                e.target.closest(".video-controls") ||
+                e.target.closest(".recording-controls")
+              ) {
+                return;
+              }
 
-            if (tile.classList.contains("fullscreen")) {
-              tile.classList.remove("fullscreen");
-              document.body.style.overflow = "auto";
-            } else {
-              // Exit any other fullscreen tiles first
-              document
-                .querySelectorAll(".video-tile.fullscreen")
-                .forEach((t) => {
-                  t.classList.remove("fullscreen");
-                });
+              if (tile.classList.contains("fullscreen")) {
+                // Exit fullscreen
+                tile.classList.remove("fullscreen");
+                document.body.style.overflow = "auto";
 
-              tile.classList.add("fullscreen");
-              document.body.style.overflow = "hidden";
-            }
+                // Restore original aspect ratio
+                const videoElement = tile.querySelector(".video-element");
+                if (videoElement) {
+                  videoElement.style.objectFit = "cover";
+                }
+              } else {
+                // Exit any other fullscreen tiles first
+                document
+                  .querySelectorAll(".video-tile.fullscreen")
+                  .forEach((t) => {
+                    t.classList.remove("fullscreen");
+                  });
+
+                // Enter fullscreen
+                tile.classList.add("fullscreen");
+                document.body.style.overflow = "hidden";
+
+                // Change video fit for better viewing
+                const videoElement = tile.querySelector(".video-element");
+                if (videoElement) {
+                  videoElement.style.objectFit = "contain";
+                }
+              }
+            });
           });
-        });
+        }
 
-        // Close fullscreen when clicking outside
-        document.addEventListener("click", function (e) {
+        // Close fullscreen when pressing Escape
+        document.addEventListener("keydown", function (e) {
           if (
-            !e.target.closest(".video-tile.fullscreen") &&
+            e.key === "Escape" &&
             document.querySelector(".video-tile.fullscreen")
           ) {
             document
@@ -3744,6 +4247,12 @@
         // Initialize WebRTC with appropriate role
         const isHost = !meetingIdParam;
         initWebRTC(isHost);
+
+        // Initialize the map
+        initMap();
+
+        // Setup video tile click handlers
+        setupVideoTileClickHandlers();
       }
 
       // Initialize the app
