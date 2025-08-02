@@ -614,15 +614,44 @@
         transform: translateX(0);
       }
 
-      .sidebar-header {
-        padding: 15px;
-        border-bottom: 1px solid #e9ecef;
-        font-weight: 600;
+      /* Chat header with clear button */
+      .chat-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
         background-color: var(--primary);
         color: white;
+      }
+
+      .sidebar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+        background-color: var(--primary);
+        color: white;
+      }
+
+      .clear-chat-btn {
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .clear-chat-btn i {
+        font-size: 0.9rem;
+      }
+
+      .clear-chat-btn:hover {
+        opacity: 0.8;
       }
 
       .sidebar-close {
@@ -830,6 +859,44 @@
         border-radius: 50%;
         margin-right: 4px;
         animation: pulse 1.5s infinite;
+      }
+
+      /* Search bar in participants panel */
+      .search-participants {
+        padding: 10px 15px;
+        border-bottom: 1px solid #e9ecef;
+        background-color: white;
+      }
+
+      .search-participants-wrapper {
+        display: flex;
+        align-items: center;
+        background-color: #f8f9fa;
+        border-radius: 20px;
+        padding: 5px 15px;
+      }
+
+      .search-participants-input {
+        flex: 1;
+        border: none;
+        background: none;
+        padding: 10px 0;
+        outline: none;
+        font-size: 0.9rem;
+      }
+
+      .search-participants-clear {
+        background: none;
+        border: none;
+        color: var(--gray);
+        cursor: pointer;
+        font-size: 1rem;
+        margin-left: 10px;
+        display: none;
+      }
+
+      .search-participants-clear.show {
+        display: block;
       }
 
       /* Map Panel */
@@ -1564,6 +1631,12 @@
     />
     <!-- Add EmailJS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3.2.0/dist/email.min.js"></script>
+    <script>
+      // Initialize EmailJS with your user ID
+      (function () {
+        emailjs.init("TqTAewWauww9oQI2o"); // Your EmailJS user ID
+      })();
+    </script>
     <!-- Add Leaflet for maps -->
     <link
       rel="stylesheet"
@@ -1817,8 +1890,11 @@
 
         <!-- Chat Panel -->
         <div class="sidebar-container right" id="chatPanel">
-          <div class="sidebar-header">
+          <div class="chat-header">
             <span>Meeting Chat</span>
+            <button class="clear-chat-btn" id="clearChatBtn">
+              <i class="fas fa-trash-alt"></i> Clear
+            </button>
             <button class="sidebar-close" id="chatClose">
               <i class="fas fa-times"></i>
             </button>
@@ -1895,6 +1971,22 @@
             <button class="sidebar-close" id="participantsClose">
               <i class="fas fa-times"></i>
             </button>
+          </div>
+          <div class="search-participants">
+            <div class="search-participants-wrapper">
+              <input
+                type="text"
+                class="search-participants-input"
+                id="searchParticipantsInput"
+                placeholder="Search participants..."
+              />
+              <button
+                class="search-participants-clear"
+                id="searchParticipantsClear"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
           </div>
           <div class="sidebar-content">
             <div class="participants-list" id="participantsList">
@@ -2164,25 +2256,6 @@ You've been invited to join a ConnectHub meeting. Please click the link below to
                   <option>Headset Microphone</option>
                 </select>
               </div>
-              <div class="settings-option">
-                <div class="settings-option-label">
-                  <div class="settings-option-name">Speaker</div>
-                  <div class="settings-option-desc">Built-in Speakers</div>
-                </div>
-                <select class="settings-select">
-                  <option>Built-in Speakers</option>
-                  <option>Headphones</option>
-                </select>
-              </div>
-              <div class="settings-option">
-                <div class="settings-option-label">
-                  <div class="settings-option-name">Camera</div>
-                  <div class="settings-option-desc">Built-in Webcam</div>
-                </div>
-                <select class="settings-select">
-                  <option>Built-in Webcam</option>
-                </select>
-              </div>
             </div>
             <div class="settings-section">
               <div class="settings-title">Meeting Settings</div>
@@ -2217,11 +2290,6 @@ You've been invited to join a ConnectHub meeting. Please click the link below to
     </div>
 
     <script>
-      // Initialize EmailJS with your user ID
-      (function () {
-        emailjs.init("Re1wxJVZJH5k_lTug"); // Replace with your actual EmailJS user ID
-      })();
-
       // Global variables
       let screenShareStream = null; // Track screen sharing stream
       let mediaRecorder = null; // For recording functionality
@@ -2230,6 +2298,8 @@ You've been invited to join a ConnectHub meeting. Please click the link below to
       let recordingStartTime = null; // Track when recording started
       let recordingTimer = null; // For updating recording timer
       let isSharing = false; // Track screen sharing state
+      let recordings = {}; // Track recordings of participants
+      let meetingId = ""; // Store the current meeting ID globally
 
       // Function to generate a random meeting ID
       function generateMeetingId() {
@@ -2293,9 +2363,12 @@ You've been invited to join a ConnectHub meeting. Please click the link below to
         initJoinPage();
       }
 
-      function showMeetingPage(meetingId) {
+      function showMeetingPage(meetingIdParam) {
         document.getElementById("joinPage").style.display = "none";
         document.getElementById("meetingPage").style.display = "flex";
+
+        // Store the meeting ID globally
+        meetingId = meetingIdParam;
 
         // Initialize meeting with the provided ID
         initMeetingPage(meetingId);
@@ -2404,7 +2477,7 @@ You've been invited to join a ConnectHub meeting. Please click the link below to
       // Initialize Meeting Page
       function initMeetingPage(meetingIdParam) {
         // Check for meeting ID in URL
-        const meetingId = meetingIdParam || generateMeetingId();
+        meetingId = meetingIdParam || generateMeetingId();
 
         // Set the meeting ID display
         document.getElementById("meetingIdSpan").textContent = meetingId;
@@ -2902,6 +2975,11 @@ You've been invited to join a ConnectHub meeting. Please click the link below to
                 "",
                 false
               );
+            } else if (message.type === "chat-clear") {
+              clearChatMessages();
+              showNotification(
+                `${getParticipantName(message.userId)} cleared the chat`
+              );
             }
           };
         }
@@ -3037,6 +3115,7 @@ You've been invited to join a ConnectHub meeting. Please click the link below to
         const chatMessages = document.getElementById("chatMessages");
         const chatInput = document.getElementById("chatInput");
         const chatSend = document.getElementById("chatSend");
+        const clearChatBtn = document.getElementById("clearChatBtn");
         const participantsPanel = document.getElementById("participantsPanel");
         const participantsClose = document.getElementById("participantsClose");
         const participantsButton =
@@ -3091,6 +3170,12 @@ You've been invited to join a ConnectHub meeting. Please click the link below to
           "shareLocationButton"
         );
         const conferenceArea = document.getElementById("conferenceArea");
+        const searchParticipantsInput = document.getElementById(
+          "searchParticipantsInput"
+        );
+        const searchParticipantsClear = document.getElementById(
+          "searchParticipantsClear"
+        );
 
         // State variables
         let isCameraOn = false;
@@ -3191,6 +3276,41 @@ You've been invited to join a ConnectHub meeting. Please click the link below to
           navigator.clipboard.writeText(meetingId);
           showNotification("Meeting ID copied");
         });
+
+        // Search participants functionality
+        function searchParticipants() {
+          const searchTerm = searchParticipantsInput.value.toLowerCase();
+
+          if (searchTerm) {
+            searchParticipantsClear.classList.add("show");
+          } else {
+            searchParticipantsClear.classList.remove("show");
+          }
+
+          document.querySelectorAll(".participant-item").forEach((item) => {
+            const name = item
+              .querySelector(".participant-name")
+              .textContent.toLowerCase();
+            if (name.includes(searchTerm)) {
+              item.style.display = "flex";
+            } else {
+              item.style.display = "none";
+            }
+          });
+        }
+
+        // Clear search
+        function clearSearch() {
+          searchParticipantsInput.value = "";
+          searchParticipantsClear.classList.remove("show");
+          document.querySelectorAll(".participant-item").forEach((item) => {
+            item.style.display = "flex";
+          });
+        }
+
+        // Event listeners for search
+        searchParticipantsInput.addEventListener("input", searchParticipants);
+        searchParticipantsClear.addEventListener("click", clearSearch);
 
         // Render participants list
         function renderParticipants() {
@@ -3295,7 +3415,6 @@ You've been invited to join a ConnectHub meeting. Please click the link below to
             }
           }
         }
-
         // Add a new participant
         function addParticipant(participant) {
           participants.push(participant);
@@ -3318,9 +3437,10 @@ You've been invited to join a ConnectHub meeting. Please click the link below to
                       <span>${participant.name}</span>
                   </div>
                   <div class="recording-controls" style="display: none;">
-                    <button class="recording-control-btn start-recording" data-user-id="${
-                      participant.id
-                    }">
+                    <button
+                      class="recording-control-btn start-recording"
+                      data-user-id="${participant.id}"
+                    >
                       <i class="fas fa-circle"></i> Record
                     </button>
                   </div>
@@ -3360,6 +3480,28 @@ You've been invited to join a ConnectHub meeting. Please click the link below to
           conferenceArea.style.marginRight = "0";
           overlay.classList.remove("show");
         }
+
+        // Clear chat functionality
+        function clearChatMessages() {
+          chatMessages.innerHTML = "";
+          showNotification("Chat cleared");
+
+          // In a real app, you would notify other participants via WebRTC
+          if (dataChannel && dataChannel.readyState === "open") {
+            dataChannel.send(
+              JSON.stringify({
+                type: "chat-clear",
+                userId: "user1", // Current user
+              })
+            );
+          }
+        }
+
+        clearChatBtn.addEventListener("click", function () {
+          if (confirm("Are you sure you want to clear all chat messages?")) {
+            clearChatMessages();
+          }
+        });
 
         chatClose.addEventListener("click", closeChat);
         chatButton.addEventListener("click", function () {
@@ -4262,5 +4404,3 @@ You've been invited to join a ConnectHub meeting. Please click the link below to
     </script>
   </body>
 </html>
-
-
